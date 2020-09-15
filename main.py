@@ -1,6 +1,5 @@
-from task1.const import ALPHABET, WORK_DIR, RAW_TEXTS_DIR, ENC_TEXTS_DIR
-from task1.create_key import create_key
-from task1.simple_substitution import SimpleSubstitutionCipher
+from task1.const import ENC_TEXTS_DIR
+from task1.simple_sub.simple_substitution import SimpleSubstitutionCipher
 
 # # create keys for short and long texts
 # create_key(ALPHABET, WORK_DIR / 'short_key.txt')
