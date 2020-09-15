@@ -1,4 +1,6 @@
-from task1.const import ALPHABET
+from typing import List
+
+from task1.const import ALPHABET, SYLLABLE_LEN
 
 
 def swap(s: str, i: int, j: int) -> str:
@@ -10,3 +12,7 @@ def swap(s: str, i: int, j: int) -> str:
 
 def preprocess(text: str) -> str:
     return ''.join(ch for ch in text.lower() if ch in ALPHABET)
+
+
+def split_into_syllables(text: str) -> List[str]:
+    return [text[i:i + SYLLABLE_LEN] for i in range(0, len(text), SYLLABLE_LEN)]
