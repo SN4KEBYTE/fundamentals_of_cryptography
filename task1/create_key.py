@@ -1,12 +1,13 @@
 from random import randint
 
+from task1.types import Path
 from task1.utils import swap
 
 
-def create_key(s: str, file) -> None:
-    for i in range(len(s) - 1, 0, -1):
+def create_key(alphabet: str, out_path: Path) -> None:
+    for i in range(len(alphabet) - 1, 0, -1):
         j: int = randint(0, i)
-        s: str = swap(s, i, j)
+        alphabet: str = swap(alphabet, i, j)
 
-    with open(file, 'w', encoding='utf-8') as out:
-        out.write(s)
+    with open(out_path, 'w', encoding='utf-8') as out:
+        out.write(alphabet)
