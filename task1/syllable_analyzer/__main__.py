@@ -3,7 +3,7 @@ from pathlib import Path
 
 from task1.utils import preprocess
 
-WORK_DIR = Path().absolute() / 'task1' / 'syllable_analyzer'
+WORK_DIR = Path(__file__).parent.absolute()
 SYLLABLE_LEN = 2
 
 
