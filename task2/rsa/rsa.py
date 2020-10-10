@@ -1,7 +1,7 @@
 from random import randint
 from typing import List, Union, Tuple
 
-from task2.utils import are_mutually_simple, fast_pow_mod, multiplicative_inverse, lcm, is_prime
+from task2.utils import are_mutually_prime, fast_pow_mod, multiplicative_inverse, lcm, is_prime
 
 
 class RSA:
@@ -22,7 +22,7 @@ class RSA:
     def __generate_open_exp(self):
         e: int = randint(2, self.__carmichael - 1)
 
-        while not are_mutually_simple(e, self.__carmichael):
+        while not are_mutually_prime(e, self.__carmichael):
             e = randint(2, self.__carmichael - 1)
 
         return e

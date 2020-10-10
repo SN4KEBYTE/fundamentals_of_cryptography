@@ -30,7 +30,7 @@ def lcm(a: int, b: int) -> int:
     return a * b // gcd(a, b)
 
 
-def are_mutually_simple(a: int, b: int) -> bool:
+def are_mutually_prime(a: int, b: int) -> bool:
     return gcd(a, b) == 1
 
 
