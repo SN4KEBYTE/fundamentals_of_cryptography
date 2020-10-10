@@ -37,12 +37,12 @@ if __name__ == '__main__':
     else:
         print('DEMO 3. Decryption.')
 
-        n, d = [int(x) for x in input('Enter n and e: ').split()]
+        n, d = [int(x) for x in input('Enter n and d: ').split()]
         rsa = RSA(3, 5)  # using some dummy values
         rsa.n = n
         rsa.d = d
 
-        m = input('Enter encrypted message (single integer or integer separated by space): ')
+        m = input('Enter encrypted message (single integers or integer separated by space): ')
 
         try:
             m = int(m)

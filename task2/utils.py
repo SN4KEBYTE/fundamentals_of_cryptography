@@ -48,7 +48,7 @@ def multiplicative_inverse(a: int, mod: int) -> int:
     return x0 % mod
 
 
-def fast_pow_mod(a: int, n: int, mod: int):
+def fast_pow_mod(a: int, n: int, mod: int) -> int:
     if n == 0:
         return 1
 
