@@ -46,3 +46,15 @@ def multiplicative_inverse(a: int, mod: int) -> int:
         y0, y1 = y1, y0 - y1 * q
 
     return x0 % mod
+
+
+def fast_pow_mod(a: int, n: int, mod: int):
+    if n == 0:
+        return 1
+
+    if n % 2 == 1:
+        return a * fast_pow_mod(a, n - 1, mod) % mod
+
+    d: int = fast_pow_mod(a, n // 2, mod)
+
+    return d * d % mod
