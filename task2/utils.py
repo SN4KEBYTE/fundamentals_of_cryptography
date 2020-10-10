@@ -34,6 +34,15 @@ def are_mutually_simple(a: int, b: int) -> bool:
     return gcd(a, b) == 1
 
 
-def multiplicative_inverse():
-    # TODO
-    pass
+def multiplicative_inverse(a: int, mod: int) -> int:
+    a0, a1 = a, mod
+    x0, x1 = 1, 0
+    y0, y1 = 0, 1
+
+    while a1 != 0:
+        q = a0 // a1
+        a0, a1 = a1, a0 - a1 * q
+        x0, x1 = x1, x0 - x1 * q
+        y0, y1 = y1, y0 - y1 * q
+
+    return x0 % mod
