@@ -1,22 +1,52 @@
 from task2.rsa.rsa import RSA
 
 if __name__ == '__main__':
-    # p, q = [int(x) for x in input().split()]
-    p = 3557
-    q = 2579
-    rsa = RSA(p, q)
+    print('<1> - key generation demo')
+    print('<2> - encryption demo')
+    print('<3> - decryption demo')
 
-    print(f'Public key: {rsa.public_key}')
-    print(f'Private key: {rsa.private_key}')
+    opt = input()
 
-    msg_int = 123456
-    msg_int_enc = rsa.encrypt(msg_int)
-    print(f'Encrypted int: {msg_int_enc}')
-    msg_int = rsa.decrypt(msg_int_enc)
-    print(f'Decrypted int: {msg_int}')
+    while opt not in ['1', '2', '3']:
+        opt = input()
 
-    msg_str = 'Hello, world!'
-    msg_str_enc = rsa.encrypt(msg_str)
-    print(f'Encrypted str: {msg_str_enc}')
-    msg_str = rsa.decrypt(msg_str_enc)
-    print(f'Decrypted str: {msg_str}')
+    if opt == '1':
+        print('DEMO 1. Key generation.')
+
+        p, q = [int(x) for x in input('Enter p and q: ').split()]
+        rsa = RSA(p, q)
+
+        print(f'Public key: {rsa.public_key}')
+        print(f'Private key: {rsa.private_key}')
+    elif opt == '2':
+        print('DEMO 2. Encryption.')
+
+        n, e = [int(x) for x in input('Enter n and e: ').split()]
+        rsa = RSA(3, 5)  # using some dummy values
+        rsa.n = n
+        rsa.e = e
+
+        m = input('Enter raw message (int or some text): ')
+
+        try:
+            m = int(m)
+        except ValueError:
+            pass
+
+        print(rsa.encrypt(m))
+    else:
+        print('DEMO 3. Decryption.')
+
+        n, d = [int(x) for x in input('Enter n and e: ').split()]
+        rsa = RSA(3, 5)  # using some dummy values
+        rsa.n = n
+        rsa.d = d
+
+        m = input('Enter encrypted message (single integer or integer separated by space): ')
+
+        try:
+            m = int(m)
+        except ValueError:
+            m = list(int(x) for x in m.split())
+
+        print(rsa.decrypt(m))
