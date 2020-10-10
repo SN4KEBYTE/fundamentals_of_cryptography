@@ -1,17 +1,23 @@
 from random import randint
-from typing import List, Union
+from typing import List, Union, Tuple
 
-from task2.utils import are_mutually_simple, multiplicative_inverse, lcm
+from task2.utils import are_mutually_simple, fast_pow_mod, multiplicative_inverse, lcm, is_prime
 
 
 class RSA:
     def __init__(self, p: int, q: int) -> None:
+        if not is_prime(p):
+            raise ValueError('p must be prime number')
+
+        if not is_prime(q):
+            raise ValueError('q must be prime number')
+
         self.__p: int = p
         self.__q: int = q
         self.__n: int = p * q
         self.__carmichael: int = lcm(p - 1, q - 1)
-        self.__e = self.__generate_open_exp()
-        self.__d = multiplicative_inverse(self.__e, self.__carmichael)
+        self.__e: int = self.__generate_open_exp()
+        self.__d: int = multiplicative_inverse(self.__e, self.__carmichael)
 
     def __generate_open_exp(self):
         e: int = randint(2, self.__carmichael - 1)
@@ -21,22 +27,52 @@ class RSA:
 
         return e
 
-    def encrypt(self, msg: Union[int, str]):
+    def encrypt(self, msg: Union[int, str]) -> Union[int, List[int]]:
         if isinstance(msg, int):
-            return pow(msg, self.__e, self.__n)
+            return fast_pow_mod(msg, self.__e, self.__n)
         else:
-            return [pow(b, self.__e, self.__n) for b in bytearray(msg, encoding='utf-8', errors='ignore')]
+            return [fast_pow_mod(b, self.__e, self.__n) for b in bytearray(msg, encoding='utf-8', errors='ignore')]
 
-    def decrypt(self, msg: Union[int, List[int]]):
+    def decrypt(self, msg: Union[int, List[int]]) -> Union[int, str]:
         if isinstance(msg, int):
-            return pow(msg, self.__d, self.__n)
+            return fast_pow_mod(msg, self.__d, self.__n)
         else:
-            return bytearray((pow(b, self.__d, self.__n) for b in msg)).decode('utf-8')
+            return bytearray((fast_pow_mod(b, self.__d, self.__n) for b in msg)).decode('utf-8')
 
     @property
-    def public_key(self):
+    def n(self):
+        return self.__n
+
+    @n.setter
+    def n(self, value):
+        print('WARNING: n was changed externally')
+
+        self.__n = value
+
+    @property
+    def e(self):
+        return self.__e
+
+    @e.setter
+    def e(self, value):
+        print('WARNING: e was changed externally')
+
+        self.__e = value
+
+    @property
+    def d(self):
+        return self.__n
+
+    @d.setter
+    def d(self, value):
+        print('WARNING: d was changed externally')
+
+        self.__d = value
+
+    @property
+    def public_key(self) -> Tuple[int, int]:
         return self.__n, self.__e
 
     @property
-    def private_key(self):
+    def private_key(self) -> Tuple[int, int]:
         return self.__n, self.__d
