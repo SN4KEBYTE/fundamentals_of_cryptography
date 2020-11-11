@@ -1,6 +1,5 @@
 from OpenSSL import crypto
 
-
 from task3.const import KEY_TYPE, KEY_BITS
 from task3.types import PathType
 
@@ -12,7 +11,7 @@ def generate_key_pair() -> crypto.PKey:
     return pkey
 
 
-def dump_public_key(pkey: crypto.PKey, path: PathType):
+def dump_public_key(pkey: crypto.PKey, path: PathType) -> None:
     if not str(path).endswith('.cer'):
         raise ValueError('You can dump public key only into .cer file.')
 
@@ -25,7 +24,7 @@ def dump_public_key(pkey: crypto.PKey, path: PathType):
         f.write(buf)
 
 
-def dump_private_key(pkey: crypto.PKey, path: PathType):
+def dump_private_key(pkey: crypto.PKey, path: PathType) -> None:
     if not str(path).endswith('.pem'):
         raise ValueError('You can dump private key only into .pem file.')
 

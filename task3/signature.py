@@ -3,7 +3,7 @@ from OpenSSL import crypto
 from task3.types import PathType
 
 
-def sign_file(file_path: PathType, private_key_path: PathType, out_path: PathType):
+def sign_file(file_path: PathType, private_key_path: PathType, out_path: PathType) -> None:
     with open(private_key_path, 'rb') as f:
         buf = f.read()
 
@@ -22,7 +22,7 @@ def verify_sign(cert_path: PathType, sign_path: PathType, data_path: PathType) -
     with open(cert_path, 'rb') as f:
         buf = f.read()
 
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
+    cert = crypto.load_certificate(crypto.FILETYPE_ASN1, buf)
 
     with open(sign_path, 'rb') as f:
         sign = f.read()

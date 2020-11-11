@@ -4,17 +4,16 @@ from typing import Any
 
 from OpenSSL import crypto
 
-
 # for key generation
 KEY_TYPE: Any = crypto.TYPE_RSA
 KEY_BITS: int = 2048
 
 # for hashing
 HASH_ALGS = {
-        'md5': md5,
-        'sha1': sha1,
-        'sha256': sha256,
-    }
+    'md5': md5,
+    'sha1': sha1,
+    'sha256': sha256,
+}
 
 CHUNK_SIZE: int = 65536
 
