@@ -5,6 +5,7 @@ from PIL import Image
 from io import BytesIO
 import struct
 from typing import Optional
+import itertools
 
 from task4.const import HASH_ALGS
 from task4.types import PathType
@@ -18,7 +19,7 @@ class AES:
         self.__key: bytes = HASH_ALGS[hash_alg](password.encode('utf-8')).digest()
 
     def encrypt(self, data: Optional[bytes] = None, in_path: Optional[PathType] = None,
-                out_path: Optional[PathType] = None, mode: int = CryptoAES.MODE_CBC) -> Optional[bytes]:
+                out_path: Optional[PathType] = None) -> Optional[bytes]:
         if not data and not in_path:
             raise ValueError('You must pass data or path to data')
 
@@ -32,7 +33,7 @@ class AES:
             content = data
 
         iv: bytes = self.__key[:CryptoAES.block_size]
-        cipher = CryptoAES.new(self.__key, mode, iv)
+        cipher = CryptoAES.new(self.__key, CryptoAES.MODE_CBC, iv)
         enc: bytes = iv + cipher.encrypt(pad(content, CryptoAES.block_size))
 
         if out_path:
@@ -69,25 +70,32 @@ class AES:
         image = Image.open(in_path)
         w, h = image.size
 
-        data_bytes = [struct.pack('ccc', pixel[0], pixel[1], pixel[2]) for pixel in image.getdata()]
-        print(data_bytes)
+        # convert image pixels to bytes
+        im_bytes = bytearray(self.__get_pixels(image))
 
-        # extract content of the image and encrypt it
+        # encrypt
         cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
-        enc_content = cipher.encrypt(pad(image.getdata(), CryptoAES.block_size))
+        enc_data = cipher.encrypt(im_bytes)
 
-        # now we need to reconstruct image
-        # extract metadata
-        exif_data = image.getexif()
+        # save encrypted image to file
+        enc_im = Image.frombytes('RGB', (w, h), enc_data)
+        enc_im.save(out_path)
 
-        # construct new image and save to file
-        # TODO: set correct size
-        enc_image = Image.frombytes('RGB', (w, h), exif_data + enc_content)
-        enc_image.save(out_path)
+    def decrypt_image(self, in_path: PathType, out_path: PathType) -> None:
+        image = Image.open(in_path)
+        w, h = image.size
 
-    # @staticmethod
-    # def __image_to_bytes(image: Image):
-    #     b = BytesIO()
-    #     image.save(b, 'jpg')
-    #
-    #     return b.getvalue()
+        # convert image pixels to bytes
+        im_bytes = bytearray(self.__get_pixels(image))
+
+        # decrypt
+        cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
+        dec: bytes = cipher.decrypt(im_bytes)
+
+        # save decrypted image to file
+        dec_im = Image.frombytes('RGB', (w, h), dec)
+        dec_im.save(out_path)
+
+    @staticmethod
+    def __get_pixels(image):
+        return list(itertools.chain(*list(image.getdata())))
