@@ -4,6 +4,8 @@ task3/data/
 task3/other_brigade/
 task3/result/
 
+task4/images/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
