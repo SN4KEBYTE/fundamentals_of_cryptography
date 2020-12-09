@@ -1,11 +1,14 @@
-from Crypto.Cipher import AES as CryptoAES
-from Crypto.Util.Padding import pad, unpad
-from PIL import Image
-
-from io import BytesIO
-import struct
-from typing import Optional
 import itertools
+from typing import Optional
+from pprint import pprint
+
+import piexif
+from Crypto.Cipher import AES as CryptoAES
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Hash import HMAC, SHA256
+from PIL import Image, ExifTags
+from PIL.PngImagePlugin import PngImageFile, PngInfo
 
 from task4.const import HASH_ALGS
 from task4.types import PathType
@@ -17,6 +20,7 @@ class AES:
             raise ValueError('Unknown hash algorithm')
 
         self.__key: bytes = HASH_ALGS[hash_alg](password.encode('utf-8')).digest()
+        self.__hmac: HMAC = HMAC.new(self.__key, digestmod=SHA256)
 
     def encrypt(self, data: Optional[bytes] = None, in_path: Optional[PathType] = None,
                 out_path: Optional[PathType] = None) -> Optional[bytes]:
@@ -66,26 +70,39 @@ class AES:
         else:
             return dec
 
-    def encrypt_image(self, in_path: PathType, out_path: PathType) -> None:
-        image = Image.open(in_path)
-        w, h = image.size
+    def encrypt_png(self, in_path: PathType, out_path: PathType) -> None:
+        image = PngImageFile(in_path)
 
-        # convert image pixels to bytes
+        iv = get_random_bytes(CryptoAES.block_size)
+        self.__hmac.update(iv)
+
+        metadata = PngInfo()
+        metadata.add_text('iv', iv.hex())
+        metadata.add_text('mac', self.__hmac.hexdigest())
+
         im_bytes = bytearray(self.__get_pixels(image))
 
-        # encrypt
         cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
         enc_data = cipher.encrypt(im_bytes)
 
-        # save encrypted image to file
-        enc_im = Image.frombytes('RGB', (w, h), enc_data)
-        enc_im.save(out_path)
+        image.frombytes(enc_data)
+        image.save(out_path, pnginfo=metadata)
 
-    def decrypt_image(self, in_path: PathType, out_path: PathType) -> None:
-        image = Image.open(in_path)
-        w, h = image.size
+    def decrypt_png(self, in_path: PathType, out_path: PathType) -> None:
+        image = PngImageFile(in_path)
 
-        # convert image pixels to bytes
+        try:
+            h = HMAC.new(self.__key, digestmod=SHA256)
+            h.update(bytes.fromhex(image.text["mac"]))
+
+            self.__hmac.verify(h.digest())
+
+            print('mac is valid')
+        except KeyError:
+            print('no mac in file')
+        except ValueError:
+            print('mac is invalid')
+
         im_bytes = bytearray(self.__get_pixels(image))
 
         # decrypt
@@ -93,7 +110,38 @@ class AES:
         dec: bytes = cipher.decrypt(im_bytes)
 
         # save decrypted image to file
-        dec_im = Image.frombytes('RGB', (w, h), dec)
+        image.frombytes(dec)
+        image.save(out_path)
+
+    def encrypt_image2(self, in_path: PathType, out_path: PathType) -> None:
+        image = Image.open(in_path)
+        image.load()  # needed only for .png EXIF data
+        w, h = image.size
+
+        exif = image.info['meta_to_read']
+
+        pprint(dict(exif))
+
+        im_bytes = bytearray(self.__get_pixels(image))
+
+        cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
+        enc_data = cipher.encrypt(im_bytes)
+
+        enc_im = Image.frombytes('RGBA', (w, h), enc_data)
+        enc_im.save(out_path)
+
+    def decrypt_image2(self, in_path: PathType, out_path: PathType) -> None:
+        image = Image.open(in_path)
+        w, h = image.size
+
+        im_bytes = bytearray(self.__get_pixels(image))
+
+        # decrypt
+        cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
+        dec: bytes = cipher.decrypt(im_bytes)
+
+        # save decrypted image to file
+        dec_im = Image.frombytes('RGBA', (w, h), dec)
         dec_im.save(out_path)
 
     @staticmethod
