@@ -45,8 +45,6 @@ class RSA:
 
     @n.setter
     def n(self, value):
-        print('WARNING: n was changed externally')
-
         self.__n = value
 
     @property
@@ -55,8 +53,6 @@ class RSA:
 
     @e.setter
     def e(self, value):
-        print('WARNING: e was changed externally')
-
         self.__e = value
 
     @property
@@ -65,8 +61,6 @@ class RSA:
 
     @d.setter
     def d(self, value):
-        print('WARNING: d was changed externally')
-
         self.__d = value
 
     @property

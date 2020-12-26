@@ -1,13 +1,10 @@
 import itertools
 from typing import Optional
-from pprint import pprint
 
-import piexif
 from Crypto.Cipher import AES as CryptoAES
+from Crypto.Hash import HMAC, SHA256
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-from Crypto.Hash import HMAC, SHA256
-from PIL import Image, ExifTags
 from PIL.PngImagePlugin import PngImageFile, PngInfo
 
 from task4.const import HASH_ALGS
@@ -17,7 +14,7 @@ from task4.types import PathType
 class AES:
     def __init__(self, password: str, hash_alg: str = 'sha256') -> None:
         if hash_alg not in HASH_ALGS:
-            raise ValueError('Unknown hash algorithm')
+            raise ValueError('unknown hash algorithm')
 
         self.__key: bytes = HASH_ALGS[hash_alg](password.encode('utf-8')).digest()
         self.__hmac: HMAC = HMAC.new(self.__key, digestmod=SHA256)
@@ -25,14 +22,14 @@ class AES:
     def encrypt(self, data: Optional[bytes] = None, in_path: Optional[PathType] = None,
                 out_path: Optional[PathType] = None) -> Optional[bytes]:
         if not data and not in_path:
-            raise ValueError('You must pass data or path to data')
+            raise ValueError('you must pass data or path to data')
 
         if data and in_path:
-            raise ValueError('You must pass only data or only path to data')
+            raise ValueError('you must pass only data or only path to data')
 
         if in_path:
             with open(in_path, 'rb') as f:
-                content = f.read()
+                content: bytes = f.read()
         else:
             content = data
 
@@ -49,14 +46,14 @@ class AES:
     def decrypt(self, data: Optional[bytes] = None, in_path: Optional[PathType] = None,
                 out_path: Optional[PathType] = None, mode: int = CryptoAES.MODE_CBC) -> Optional[bytes]:
         if not data and not in_path:
-            raise ValueError('You must pass data or path to data')
+            raise ValueError('you must pass data or path to data')
 
         if data and in_path:
-            raise ValueError('You must pass only data or only path to data')
+            raise ValueError('you must pass only data or only path to data')
 
         if in_path:
             with open(in_path, 'rb') as f:
-                enc = f.read()
+                enc: bytes = f.read()
         else:
             enc = data
 
@@ -73,76 +70,74 @@ class AES:
     def encrypt_png(self, in_path: PathType, out_path: PathType) -> None:
         image = PngImageFile(in_path)
 
-        iv = get_random_bytes(CryptoAES.block_size)
-        self.__hmac.update(iv)
-
-        metadata = PngInfo()
-        metadata.add_text('iv', iv.hex())
-        metadata.add_text('mac', self.__hmac.hexdigest())
-
+        # convert pixels to bytes in order to encrypt them
         im_bytes = bytearray(self.__get_pixels(image))
 
+        # get random IV and calculate MAC
+        iv = get_random_bytes(CryptoAES.block_size)
+        h = HMAC.new(self.__key, digestmod=SHA256)
+        h.update(im_bytes)
+
+        # create metadata object in order to save IV and MAC to image
+        metadata = PngInfo()
+        metadata.add_text('iv', iv.hex())
+        metadata.add_text('mac', h.hexdigest())
+
+        print(f'writing IV = {iv.hex()} and MAC = {h.hexdigest()} to image metadata')
+
+        # encrypt image
         cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
         enc_data = cipher.encrypt(im_bytes)
 
+        # write image to file with metadata
         image.frombytes(enc_data)
         image.save(out_path, pnginfo=metadata)
 
     def decrypt_png(self, in_path: PathType, out_path: PathType) -> None:
         image = PngImageFile(in_path)
+        iv: Optional[str] = None
+        mac: Optional[str] = None
 
+        # try to get IV from metadata
         try:
-            h = HMAC.new(self.__key, digestmod=SHA256)
-            h.update(bytes.fromhex(image.text["mac"]))
+            iv = image.text['iv']
 
-            self.__hmac.verify(h.digest())
-
-            print('mac is valid')
+            print(f'found IV = {iv}')
         except KeyError:
-            print('no mac in file')
-        except ValueError:
-            print('mac is invalid')
+            print('IV was not found in file')
 
+        # try to get MAC from metadata
+        try:
+            mac = image.text['mac']
+
+            print(f'found MAC = {mac}')
+        except KeyError:
+            print('MAC was not found in file')
+
+        # convert pixels to bytes in order to decrypt them
         im_bytes = bytearray(self.__get_pixels(image))
 
-        # decrypt
+        # decrypt image
         cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
         dec: bytes = cipher.decrypt(im_bytes)
+
+        # try to verify MAC
+        try:
+            self.__hmac.update(dec)
+            self.__hmac.verify(bytes.fromhex(mac))
+
+            print('MAC is valid')
+        except ValueError:
+            print('MAC is invalid')
+
+        # don't forget about metadata
+        metadata = PngInfo()
+        metadata.add_text('iv', iv)
+        metadata.add_text('mac', mac)
 
         # save decrypted image to file
         image.frombytes(dec)
-        image.save(out_path)
-
-    def encrypt_image2(self, in_path: PathType, out_path: PathType) -> None:
-        image = Image.open(in_path)
-        image.load()  # needed only for .png EXIF data
-        w, h = image.size
-
-        exif = image.info['meta_to_read']
-
-        pprint(dict(exif))
-
-        im_bytes = bytearray(self.__get_pixels(image))
-
-        cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
-        enc_data = cipher.encrypt(im_bytes)
-
-        enc_im = Image.frombytes('RGBA', (w, h), enc_data)
-        enc_im.save(out_path)
-
-    def decrypt_image2(self, in_path: PathType, out_path: PathType) -> None:
-        image = Image.open(in_path)
-        w, h = image.size
-
-        im_bytes = bytearray(self.__get_pixels(image))
-
-        # decrypt
-        cipher = CryptoAES.new(self.__key, CryptoAES.MODE_ECB)
-        dec: bytes = cipher.decrypt(im_bytes)
-
-        # save decrypted image to file
-        dec_im = Image.frombytes('RGBA', (w, h), dec)
-        dec_im.save(out_path)
+        image.save(out_path, pnginfo=metadata)
 
     @staticmethod
     def __get_pixels(image):

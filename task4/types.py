@@ -1,4 +1,5 @@
 from os import PathLike
+from pathlib import Path
 from typing import Union
 
-PathType = Union[str, bytes, PathLike]
+PathType = Union[str, bytes, Path, PathLike]

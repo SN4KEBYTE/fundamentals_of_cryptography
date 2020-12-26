@@ -1,9 +1,13 @@
-from Crypto.Cipher import AES as CryptoAES
+from task4.aes.aes import AES
+from task4.const import IMAGE_DIR, ENC_DIR, DEC_DIR
 
-from task4.aes import AES
+password = input('Enter password: ')
+aes = AES(password)
 
-aes = AES('mypass')
-aes.encrypt_image('br4_2.jpg', 'br4_2_encrypted.jpg')
+# part I
+aes.encrypt(in_path=IMAGE_DIR / 'br4.png', out_path=ENC_DIR / 'br4_enc_part1')
+aes.decrypt(in_path=ENC_DIR / 'br4_enc_part1', out_path=DEC_DIR / 'br4_dec_part1.png')
 
-# aes.encrypt('br4_2.jpg', 'enc')
-# aes.decrypt('enc', 'br4_2_enc.jpg')
+# part II, III, IV
+aes.encrypt_png(in_path=IMAGE_DIR / 'br4.png', out_path=ENC_DIR / 'br4_enc_part2.png')
+aes.decrypt_png(in_path=ENC_DIR / 'br4_enc_part2.png', out_path=DEC_DIR / 'br4_dec_part2.png')
